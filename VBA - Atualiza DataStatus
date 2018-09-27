@@ -1,0 +1,101 @@
+Public Sub AtualizaDataStatus()
+    Dim diretorio As String
+    Dim extencaoArquivo As String
+    Dim ultimaLinha As String
+    Dim data As String
+    Dim projeto As String
+
+    '--- Insira a Data Status
+    'data = "30/09/18"
+    data = "ND"
+    
+    '---Limpa a coluna "Atualizado ?" no excel para que seja atualizado linha a linha
+    Limpar
+
+    diretorio = "\\lua\qualidade\_indicadores\Indicadores Power BI\Tabela Fato - Power BI"
+    extencaoArquivo = ".xlsx"
+
+    Workbooks.Open diretorio & extencaoArquivo
+    Worksheets("Projetos - Novos Portifolios").Activate
+    Range("A1").Select
+      
+    ultimaLinha = Cells(Rows.Count, 1).End(xlUp).Row
+    
+    For i = 2 To ultimaLinha
+        If (Range("H" & i).Value) = 1 Then
+        
+            projeto = Range("A" & i).Value
+            Call dataStatus(projeto, data)
+            
+            Range("J" & i).Value = 1
+            
+        Else
+            Range("J" & i).Value = 1
+            ActiveWorkbook.Save
+        End If
+    Next i
+      
+    Workbooks("Tabela Fato - Power BI.xlsx").Close SaveChanges:=True
+End Sub
+
+Private Sub dataStatus(projectName As String, dataStatus As String)
+    Dim projeto As String
+    Dim data As String
+    
+    '---Nome da variavel no nome do Projeto
+    projeto = projectName
+    data = dataStatus
+    
+    '---Verifica se o projeto está com CheckedOut para alguem
+    If Application.IsCheckedOut(projeto) Then
+        '---Informa na planilha que o projeto não pode ser atualizado pois está com CheckedOut para alguem
+    Else
+        '---Abre o arquivo
+        FileOpenEx Name:="<>\" + projeto, ReadOnly:=True
+        
+        '---Realiza o CheckOut
+        ProjectCheckOut
+        
+        '---Aplica a data no campo DataStatus
+        ChangeStatusDate Date:=data
+        
+        '---Realiza a publicação
+        Publish
+        Publish
+        '---Fecha o arquivo, o salva e realiza o CheckIn
+        FileCloseEx Save:=pjSave, CheckIn:=True
+    End If
+End Sub
+
+Private Sub Teste()
+    Dim d As String
+    Dim p As String
+    d = "30/09/18"
+    p = "Cemig 589-16"
+    Call dataStatus(p, d)
+End Sub
+
+
+
+Private Function Limpar()
+    Dim strDir As String
+    Dim strDiretório As String
+    Dim projeto
+
+    strDiretório = "\\lua\qualidade\_indicadores\Indicadores Power BI\Tabela Fato - Power BI"
+    strDir = ".xlsx"
+
+    Workbooks.Open strDiretório & strDir
+    Worksheets("Projetos - Novos Portifolios").Activate
+    Range("A1").Select
+    
+    Dim ultimaLinha As String
+    ultimaLinha = Cells(Rows.Count, 1).End(xlUp).Row
+    
+    For i = 2 To ultimaLinha
+            Range("J" & i).Value = ""
+            ActiveWorkbook.Save
+    Next i
+    
+    Workbooks("Tabela Fato - Power BI.xlsx").Close SaveChanges:=True
+End Function
